@@ -411,3 +411,34 @@ func TestSubQueryBuilder(t *testing.T) {
 	require.Equal(t, expectedQueryString, queryString)
 	assert.Equal(t, expectedQueryParams, queryParams)
 }
+
+// Test partition filtering using json_extract.
+func TestPartitionFilter(t *testing.T) {
+	db, err := setupTestDB()
+	require.NoError(t, err, "failed to setup test DB")
+
+	defer db.Close()
+
+	// Query with partition filter - only units with partition="part1" should be returned
+	q := Query{}
+	q.query(
+		fmt.Sprintf(
+			"SELECT * FROM %s WHERE ignore = 0 AND json_extract(tags, '$.partition') IN (?)", //nolint:unqueryvet
+			base.UnitsDBTableName,
+		),
+	)
+	q.params = append(q.params, "part1")
+
+	units, err := Querier[models.Unit](t.Context(), db, q, noOpLogger)
+	require.NoError(t, err)
+
+	// All returned units should have partition "part1" in their tags
+	for _, unit := range units {
+		partition, ok := unit.Tags["partition"]
+		require.True(t, ok, "unit should have partition tag")
+		assert.Equal(t, "part1", partition, "partition should be 'part1'")
+	}
+
+	// Should have at least one result
+	assert.Greater(t, len(units), 0, "should return at least one unit with partition=part1")
+}

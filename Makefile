@@ -218,6 +218,7 @@ test-e2e: $(PROMTOOL) build pkg/collector/testdata/sys/.unpacked pkg/collector/t
 	./scripts/e2e-test.sh -s api-current-usage-experimental-query
 	./scripts/e2e-test.sh -s api-current-usage-admin-query
 	./scripts/e2e-test.sh -s api-current-usage-admin-experimental-query
+	./scripts/e2e-test.sh -s api-current-usage-partition-filter
 	./scripts/e2e-test.sh -s api-current-usage-query-k8s
 	./scripts/e2e-test.sh -s api-global-usage-query
 	./scripts/e2e-test.sh -s api-global-usage-admin-query
@@ -305,6 +306,7 @@ test-e2e-update: $(PROMTOOL) build pkg/collector/testdata/sys/.unpacked pkg/coll
 	./scripts/e2e-test.sh -s api-current-usage-experimental-query -u || true
 	./scripts/e2e-test.sh -s api-current-usage-admin-query -u || true
 	./scripts/e2e-test.sh -s api-current-usage-admin-experimental-query -u || true
+	./scripts/e2e-test.sh -s api-current-usage-partition-filter -u || true
 	./scripts/e2e-test.sh -s api-current-usage-query-k8s -u || true
 	./scripts/e2e-test.sh -s api-global-usage-query -u || true
 	./scripts/e2e-test.sh -s api-global-usage-admin-query -u || true

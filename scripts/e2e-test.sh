@@ -293,6 +293,10 @@ then
   then
     desc="/api/units preflight end point test"
     fixture='pkg/api/testdata/output/e2e-test-api-preflight-query.txt'
+  elif [ "${scenario}" = "api-current-usage-partition-filter" ]
+  then
+    desc="/usage/current/admin end point test with partition filter"
+    fixture='pkg/api/testdata/output/e2e-test-api-server-current-usage-partition-filter.txt'
   fi
 
   logfile="${tmpdir}/ceems_api_server.log"
@@ -1070,6 +1074,9 @@ then
     get -I -X OPTIONS -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: x-grafana-user" -H "Origin: https://reqbin.com" "127.0.0.1:${port}/api/${api_version}/units" > "${fixture_output}"
     # Remove Date line from output
     sed -i '/^Date/d' "${fixture_output}"
+  elif [ "${scenario}" = "api-current-usage-partition-filter" ]
+  then
+    get -H "X-Grafana-User: grafana" "127.0.0.1:${port}/api/${api_version}/usage/current/admin?cluster_id=slurm-0&partition=part1&from=${usage_from}&to=${usage_to}&__terminated" > "${fixture_output}"
   fi
 
 elif [[ "${scenario}" =~ ^"lb" ]] 

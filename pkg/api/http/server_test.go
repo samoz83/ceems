@@ -1004,3 +1004,69 @@ func TestUnitsHandlerWithUnituuidsQueryParams(t *testing.T) {
 // 		t.Errorf("expected usage %#v usage, got %#v", expectedUsage, response.Data)
 // 	}
 // }
+
+// Test getCommonQueryParams with partition filter.
+func TestGetCommonQueryParams(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	f, err := os.Create(filepath.Join(tmpDir, base.CEEMSDBName))
+	require.NoError(t, err)
+	defer f.Close()
+
+	server := setupServer(tmpDir)
+	defer server.Shutdown(t.Context())
+
+	tests := []struct {
+		name           string
+		urlParams      url.Values
+		expectedQuery  string
+		expectedParams []string
+	}{
+		{
+			name:           "no params",
+			urlParams:      url.Values{},
+			expectedQuery:  "SELECT * FROM table",
+			expectedParams: nil,
+		},
+		{
+			name:           "project only",
+			urlParams:      url.Values{"project": []string{"acc1"}},
+			expectedQuery:  "SELECT * FROM table AND project IN (?)",
+			expectedParams: []string{"acc1"},
+		},
+		{
+			name:           "partition only",
+			urlParams:      url.Values{"partition": []string{"gpu"}},
+			expectedQuery:  "SELECT * FROM table AND json_extract(tags, '$.partition') IN (?)",
+			expectedParams: []string{"gpu"},
+		},
+		{
+			name:           "multiple partitions",
+			urlParams:      url.Values{"partition": []string{"gpu", "cpu"}},
+			expectedQuery:  "SELECT * FROM table AND json_extract(tags, '$.partition') IN (?,?)",
+			expectedParams: []string{"gpu", "cpu"},
+		},
+		{
+			name: "project and partition",
+			urlParams: url.Values{
+				"project":   []string{"acc1"},
+				"partition": []string{"gpu"},
+			},
+			expectedQuery:  "SELECT * FROM table AND project IN (?) AND json_extract(tags, '$.partition') IN (?)",
+			expectedParams: []string{"acc1", "gpu"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			q := Query{}
+			q.query("SELECT * FROM table")
+
+			result := server.getCommonQueryParams(&q, test.urlParams)
+			queryString, queryParams := result.get()
+
+			assert.Equal(t, test.expectedQuery, queryString)
+			assert.Equal(t, test.expectedParams, queryParams)
+		})
+	}
+}
