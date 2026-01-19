@@ -698,6 +698,16 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Slurm partition (filter by partition)",
+                        "name": "partition",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "From timestamp",
                         "name": "from",
@@ -794,6 +804,16 @@ const docTemplate = `{
                         "collectionFormat": "csv",
                         "description": "Project",
                         "name": "project",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Slurm partition (filter by partition)",
+                        "name": "partition",
                         "in": "query"
                     },
                     {

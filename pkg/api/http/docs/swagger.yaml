@@ -1287,6 +1287,13 @@ paths:
           type: string
         name: project
         type: array
+      - collectionFormat: multi
+        description: Slurm partition (filter by partition)
+        in: query
+        items:
+          type: string
+        name: partition
+        type: array
       - description: From timestamp
         in: query
         name: from
@@ -1390,6 +1397,13 @@ paths:
         items:
           type: string
         name: project
+        type: array
+      - collectionFormat: multi
+        description: Slurm partition (filter by partition)
+        in: query
+        items:
+          type: string
+        name: partition
         type: array
       - collectionFormat: multi
         description: Username
