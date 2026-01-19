@@ -493,6 +493,12 @@ func (s *CEEMSServer) getCommonQueryParams(q *Query, urlValues url.Values) Query
 		q.param(clusterIDs)
 	}
 
+	// Get partition query parameters if any (Slurm-specific, stored in tags JSON)
+	if partitions := urlValues["partition"]; len(partitions) > 0 {
+		q.query(" AND json_extract(tags, '$.partition') IN ")
+		q.param(partitions)
+	}
+
 	return *q
 }
 
@@ -1523,7 +1529,9 @@ func (s *CEEMSServer) currentUsage(users []string, fields []string, w http.Respo
 	// Ignore any empty parts
 	for _, query := range queryParts {
 		parts := strings.Split(query, "||")
-		queries = append(queries, parts[0])
+		if parts[0] != "" {
+			queries = append(queries, parts[0])
+		}
 
 		if len(parts) == 1 || (len(parts) > 1 && parts[1] == "") {
 			continue
@@ -1584,9 +1592,10 @@ func (s *CEEMSServer) currentUsage(users []string, fields []string, w http.Respo
 	// Finally add GROUP BY clause. Always group by username,project
 	groupby = []string{"username", "project"}
 
-	for _, q := range r.URL.Query()["groupby"] {
-		if q != "" {
-			groupby = append(groupby, q)
+	for _, g := range r.URL.Query()["groupby"] {
+		if g != "" && g != "partition" {
+			// Note: groupby=partition is not supported as it requires complex scanner changes
+			groupby = append(groupby, g)
 		}
 	}
 	// Remove duplicates values
@@ -1726,6 +1735,7 @@ func (s *CEEMSServer) globalUsage(users []string, queriedFields []string, w http
 //	@Param			mode			path		string		true	"Whether to get usage stats within a period or global"	Enums(current, global)
 //	@Param			cluster_id		query		[]string	false	"cluster ID"											collectionFormat(multi)
 //	@Param			project			query		[]string	false	"Project"												collectionFormat(multi)
+//	@Param			partition		query		[]string	false	"Slurm partition (filter by partition)"					collectionFormat(multi)
 //	@Param			from			query		string		false	"From timestamp"
 //	@Param			to				query		string		false	"To timestamp"
 //	@Param			field			query		[]string	false	"Fields to return in response"	collectionFormat(multi)
@@ -1827,6 +1837,7 @@ func (s *CEEMSServer) usage(w http.ResponseWriter, r *http.Request) {
 //	@Param			mode			path		string		true	"Whether to get usage stats within a period or global"	Enums(current, global)
 //	@Param			cluster_id		query		[]string	false	"cluster ID"											collectionFormat(multi)
 //	@Param			project			query		[]string	false	"Project"
+//	@Param			partition		query		[]string	false	"Slurm partition (filter by partition)"					collectionFormat(multi)
 //	@Param			user			query		[]string	false	"Username"	collectionFormat(multi)
 //	@Param			from			query		string		false	"From timestamp"
 //	@Param			to				query		string		false	"To timestamp"
